@@ -576,8 +576,8 @@ function Library:CreateWindow(options)
         Parent = logoZone,
         Name = "Logo",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = options.LogoPosition or UDim2.new(0.5, 0, 0, 28),
-        Size = options.LogoSize or fromOffset(44, 44),
+        Position = options.LogoPosition or UDim2.new(0.5, 0, 0, 32),
+        Size = options.LogoSize or fromOffset(52, 52),
         BackgroundTransparency = 1,
         Image = logoImage,
         ImageColor3 = Theme.Accent,
@@ -599,14 +599,14 @@ function Library:CreateWindow(options)
         Parent = logoZone,
         Name = "LogoFallback",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = options.LogoPosition or UDim2.new(0.5, 0, 0, 28),
-        Size = options.LogoSize or fromOffset(44, 44),
+        Position = options.LogoPosition or UDim2.new(0.5, 0, 0, 32),
+        Size = options.LogoSize or fromOffset(52, 52),
         BackgroundTransparency = 1,
-        Text = options.LogoFallback or "TR",
+        Text = options.LogoFallback or "",
         TextColor3 = Theme.Accent,
         TextSize = 21,
         FontFace = Fonts.Bold,
-        Visible = logoImage == "",
+        Visible = logoImage == "" and type(options.LogoFallback) == "string" and options.LogoFallback ~= "",
     })
     bindTheme(logoFallback, "TextColor3", function(theme) return theme.Accent end)
 
@@ -616,7 +616,7 @@ function Library:CreateWindow(options)
         Position = fromOffset(0, 53),
         Size = UDim2.new(1, 0, 0, 15),
         BackgroundTransparency = 1,
-        Visible = options.ShowBrandName ~= false,
+        Visible = options.ShowBrandName == true,
     })
     create("UIListLayout", {
         Parent = brand,
