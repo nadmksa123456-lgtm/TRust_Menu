@@ -7,7 +7,7 @@ local Window = TRustMenu:CreateWindow({
 
     Title = "TRust Menu v2.0",
 
-    LogoUrl = "https://raw.githubusercontent.com/YourUsername/TRust-Menu/main/assets/0.png", -- رابط شعارك المباشر
+    LogoUrl = "https://raw.githubusercontent.com/nadmksa123456-lgtm/TRust_Menu/main/assets/0.png", -- رابط شعارك المباشر
 
     LogoFile = "logo_main.png", -- سيتم حفظ الشعار بهذا الاسم محلياً
 
