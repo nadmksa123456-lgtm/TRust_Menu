@@ -1,4 +1,4 @@
-local TRustMenu = loadstring(game:HttpGet("https://raw.githubusercontent.com/YourUsername/TRust-Menu/main/source.lua"))()
+local TRustMenu = loadstring(game:HttpGet("https://raw.githubusercontent.com/nadmksa123456-lgtm/TRust_Menu/refs/heads/main/source.lua"))()
 
 
 -- إنشاء النافذة الرئيسية مع دعم الشعار الحقيقي عبر Raw GitHub
