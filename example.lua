@@ -98,8 +98,9 @@ local Window = Library:CreateWindow({
 	ThemeColor = Color3.fromRGB(8, 126, 255),
 	Logo = Icons:AssetId(0),
 	LogoFile = Icons:Path(0),
-	LogoSize = UDim2.fromOffset(44, 44),
-	LogoFallback = "TR",
+	LogoSize = UDim2.fromOffset(52, 52),
+	LogoFallback = "",
+	ShowBrandName = false,
 })
 
 local WorkspaceCategory = Window:AddCategory({
