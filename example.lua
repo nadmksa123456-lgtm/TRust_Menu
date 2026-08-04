@@ -1,80 +1,301 @@
-local TRustMenu = loadstring(game:HttpGet("https://raw.githubusercontent.com/nadmksa123456-lgtm/TRust_Menu/refs/heads/main/source.lua"))()
+--[[
+	TRust Menu - Neutral Example
 
+	يمكن تحديد مسار المشروع قبل تشغيل الملف:
+	getgenv().TRUST_MENU_ROOT = "TRust-Menu"
+	وإذا لم تحدده، سيحاول المثال اكتشافه تلقائيًا.
+]]
 
--- إنشاء النافذة الرئيسية مع دعم الشعار الحقيقي عبر Raw GitHub
+local environment = type(getgenv) == "function" and getgenv() or _G
+local configuredRoot = environment.TRUST_MENU_ROOT
+local projectRoot = configuredRoot
 
-local Window = TRustMenu:CreateWindow({
+local function joinPath(root, fileName)
+	if root == nil or root == "" or root == "." then
+		return fileName
+	end
 
-    Title = "TRust Menu v2.0",
+	return tostring(root):gsub("[\\/]+$", "") .. "/" .. fileName
+end
 
-    LogoUrl = "https://raw.githubusercontent.com/nadmksa123456-lgtm/TRust_Menu/main/assets/0.png", -- رابط شعارك المباشر
+local function runChunk(chunk, path)
+	local ok, result = pcall(chunk)
+	if not ok then
+		error(("[TRust Menu] Failed to run %s: %s"):format(path, tostring(result)), 3)
+	end
 
-    LogoFile = "logo_main.png", -- سيتم حفظ الشعار بهذا الاسم محلياً
+	return result
+end
 
-    ToggleKey = Enum.KeyCode.RightControl -- زر إخفاء وإظهار المنيو
+local function candidateRoots()
+	local roots = {}
+	local seen = {}
+	local function add(root)
+		if root == nil or root == "" then return end
+		root = tostring(root)
+		if not seen[root] then
+			seen[root] = true
+			table.insert(roots, root)
+		end
+	end
 
+	add(projectRoot)
+	add(configuredRoot)
+	add(".")
+	add("TRust-Menu")
+	add("outputs/TRust-Menu")
+	return roots
+end
+
+local function loadProjectFile(fileName)
+	local failures = {}
+
+	for _, root in ipairs(candidateRoots()) do
+		local path = joinPath(root, fileName)
+		if type(loadfile) == "function" then
+			local ok, chunk, compileError = pcall(loadfile, path)
+			if ok and type(chunk) == "function" then
+				projectRoot = root
+				return runChunk(chunk, path)
+			end
+
+			table.insert(failures, tostring(compileError or chunk))
+		end
+
+		if type(readfile) == "function" and type(loadstring) == "function" then
+			local readOk, sourceOrError = pcall(readfile, path)
+			if readOk then
+				local compileOk, chunk, compileError = pcall(loadstring, sourceOrError, "@" .. path)
+				if compileOk and type(chunk) == "function" then
+					projectRoot = root
+					return runChunk(chunk, path)
+				end
+
+				table.insert(failures, tostring(compileError or chunk))
+			else
+				table.insert(failures, tostring(sourceOrError))
+			end
+		end
+	end
+
+	error(("[TRust Menu] Unable to load %s. Set TRUST_MENU_ROOT to the project folder.\n%s")
+		:format(fileName, table.concat(failures, "\n")), 2)
+end
+
+local Icons = loadProjectFile("icons.lua")
+if type(Icons) == "table" and type(Icons.SetRoot) == "function" then
+	Icons:SetRoot(projectRoot)
+end
+local Library = loadProjectFile("source.lua")
+
+assert(type(Icons) == "table", "[TRust Menu] icons.lua did not return its registry")
+assert(type(Library) == "table", "[TRust Menu] source.lua did not return the library")
+
+local Window = Library:CreateWindow({
+	Name = "TRust Menu",
+	Size = Vector2.new(960, 680),
+	ToggleKey = Enum.KeyCode.Insert,
+	ThemeColor = Color3.fromHex("#00E1FF"),
+	Logo = Icons:Resolve(0),
+	LogoFile = Icons:Path(0),
+	LogoSize = UDim2.fromOffset(52, 52),
+	LogoFallback = "TR",
+	ShowBrandName = false,
 })
 
+-- Category 1: Main (Cube Icon 1.png)
+local MainCategory = Window:AddCategory({
+	Name = "Main",
+	Icon = Icons:Resolve(1),
+	IconFile = Icons:Path(1),
+	Symbol = "M",
+	Order = 1,
+})
 
--- ============================================
+-- Category 2: Combat (Scope Icon 2.png)
+local CombatCategory = Window:AddCategory({
+	Name = "Combat",
+	Icon = Icons:Resolve(2),
+	IconFile = Icons:Path(2),
+	Symbol = "C",
+	Order = 2,
+})
 
--- القسم الأول: التعديلات العامة (Main Tab)
+-- Category 3: Visuals (Eye Icon 3.png)
+local VisualsCategory = Window:AddCategory({
+	Name = "Visuals",
+	Icon = Icons:Resolve(3),
+	IconFile = Icons:Path(3),
+	Symbol = "V",
+	Order = 3,
+})
 
--- ============================================
+-- Category 4: Players List (User Icon 4.png)
+local PlayersCategory = Window:AddCategory({
+	Name = "Players List",
+	Icon = Icons:Resolve(4),
+	IconFile = Icons:Path(4),
+	Symbol = "P",
+	Order = 4,
+})
 
-local MainTab = Window:CreateTab("الرئيسية")
+-- Category 5: Settings (Gear Icon 5.png)
+local SettingsCategory = Window:AddCategory({
+	Name = "Settings",
+	Icon = Icons:Resolve(5),
+	IconFile = Icons:Path(5),
+	Symbol = "S",
+	Order = 5,
+})
 
+---------------------------------------------------------
+-- General Category Tabs
+---------------------------------------------------------
+local GeneralTab = MainCategory:AddTab({ Name = "General", Order = 1 })
+local SubVisualsTab = MainCategory:AddTab({ Name = "Visuals", Order = 2 })
+local SubSettingsTab = MainCategory:AddTab({ Name = "Settings", Order = 3 })
 
-MainTab:CreateSection("--- إعدادات الشخصية ---")
+---------------------------------------------------------
+-- General Tab Sections (Exact match to reference image)
+---------------------------------------------------------
 
+-- Left Column: General Controls
+local Controls = GeneralTab:AddSection({
+	Name = "General Controls",
+	Column = 1,
+	Order = 1,
+})
 
--- إضافة زر (Button)
+Controls:AddToggle({
+	Text = "Enable Module",
+	Flag = "enable_module",
+	Default = true,
+})
 
-MainTab:CreateButton("تنسيط السرعة (Speed Boost)", function()
+Controls:AddToggle({
+	Text = "Smooth Movement",
+	Flag = "smooth_movement",
+	Default = false,
+})
 
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50
+Controls:AddSlider({
+	Text = "Power",
+	Flag = "power",
+	Min = 0,
+	Max = 100,
+	Default = 45,
+	Suffix = "%",
+})
 
-    print("تم تفعيل السرعة!")
+Controls:AddSlider({
+	Text = "Range",
+	Flag = "range",
+	Min = 0,
+	Max = 500,
+	Default = 150,
+})
 
-end)
+-- Right Column: Theme Preview
+local ThemePreview = GeneralTab:AddSection({
+	Name = "Theme Preview",
+	Column = 2,
+	Order = 1,
+})
 
+ThemePreview:AddColorPicker({
+	Text = "Menu Color",
+	Flag = "menu_color",
+	Default = Color3.fromRGB(7, 132, 255),
+	ApplyToTheme = true,
+})
 
--- إضافة مفتاح تشغيل/إيقاف (Toggle)
+ThemePreview:AddCard({
+	Title = "Active Accent",
+	Value = "TRust",
+})
 
-MainTab:CreateToggle("قفز لا نهائي (Infinite Jump)", false, function(Value)
+ThemePreview:AddToggle({
+	Text = "Interface Enabled",
+	Flag = "interface_enabled",
+	Default = true,
+})
 
-    _G.InfJump = Value
+ThemePreview:AddSlider({
+	Text = "Menu Opacity",
+	Flag = "menu_opacity",
+	Min = 0,
+	Max = 100,
+	Default = 92,
+	Suffix = "%",
+})
 
-    game:GetService("UserInputService").JumpRequest:Connect(function()
+--------------------------------0-------------------------
+-- Other Categories & Tabs
+---------------------------------------------------------
+local SubVisualsSection = SubVisualsTab:AddSection({ Name = "Display Settings", Column = 1 })
+SubVisualsSection:AddToggle({ Text = "Show Crosshair", Flag = "show_crosshair", Default = true })
+SubVisualsSection:AddToggle({ Text = "Highlight Targets", Flag = "highlight_targets", Default = true })
 
-        if _G.InfJump then
+local SubSettingsSection = SubSettingsTab:AddSection({ Name = "Quick Configuration", Column = 1 })
+SubSettingsSection:AddKeybind({ Text = "Toggle Menu Key", Flag = "toggle_key", Default = Enum.KeyCode.Insert })
 
-            game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+local AimbotTab = CombatCategory:AddTab({ Name = "Aimbot" })
+local AimbotSection = AimbotTab:AddSection({ Name = "Aimbot Configuration", Column = 1 })
+AimbotSection:AddToggle({ Text = "Aimbot Enabled", Flag = "aimbot_enabled", Default = false })
+AimbotSection:AddSlider({ Text = "FOV Radius", Flag = "fov_radius", Min = 30, Max = 500, Default = 120 })
 
-        end
+local EspTab = VisualsCategory:AddTab({ Name = "ESP" })
+local EspSection = EspTab:AddSection({ Name = "ESP Settings", Column = 1 })
+EspSection:AddToggle({ Text = "Box ESP", Flag = "esp_box", Default = true })
+EspSection:AddToggle({ Text = "Tracers", Flag = "esp_tracers", Default = false })
 
-    end)
+local PlayerTab = PlayersCategory:AddTab({ Name = "Local Player" })
+local PlayerSection = PlayerTab:AddSection({ Name = "Movement Options", Column = 1 })
+PlayerSection:AddSlider({ Text = "WalkSpeed", Flag = "walkspeed", Min = 16, Max = 250, Default = 16 })
+PlayerSection:AddSlider({ Text = "JumpPower", Flag = "jumppower", Min = 50, Max = 300, Default = 50 })
 
-end)
+local MenuConfigTab = SettingsCategory:AddTab({ Name = "Menu Config" })
+local MenuConfigSection = MenuConfigTab:AddSection({ Name = "Menu Customization", Column = 1 })
 
+MenuConfigSection:AddColorPicker({
+	Text = "Menu Color",
+	Flag = "menu_color_picker",
+	Default = Color3.fromHex("#00E1FF"),
+	ApplyToTheme = true,
+	Callback = function(color)
+		Window:SetThemeColor(color)
+	end,
+})
 
--- ============================================
+MenuConfigSection:AddSlider({
+	Text = "Menu Opacity",
+	Flag = "menu_opacity_slider",
+	Min = 10,
+	Max = 100,
+	Default = 92,
+	Suffix = "%",
+	Callback = function(value)
+		Window:SetOpacity(value)
+	end,
+})
 
--- القسم الثاني: السكربتات المخصصة (Scripts Tab)
+MenuConfigSection:AddKeybind({
+	Text = "Show / Hide Menu",
+	Default = Enum.KeyCode.Insert,
+	OnChanged = function(key)
+		Window.ToggleKey = key
+	end,
+})
 
--- ============================================
+MenuConfigSection:AddButton({
+	Text = "Unload Menu",
+	Callback = function()
+		Library:Unload()
+	end,
+})
 
-local ScriptsTab = Window:CreateTab("السكربتات")
-
-
-ScriptsTab:CreateSection("--- أدوات مساعدة ---")
-
-
-ScriptsTab:CreateButton("إعادة ريسبون (Reset Character)", function()
-
-    game.Players.LocalPlayer.Character.Humanoid.Health = 0
-
-end)
-
-
-print("تم تحميل TRust-Menu بنجاح!") --[[
+return {
+	Library = Library,
+	Icons = Icons,
+	Window = Window,
+}
